@@ -1,5 +1,6 @@
 package com.example.shop_project.controller;
 
+import com.example.shop_project.entity.Item;
 import com.example.shop_project.model.OrderView;
 import com.example.shop_project.service.ItemService;
 import com.example.shop_project.service.OrderService;
@@ -26,17 +27,8 @@ public class OrderController {
     @GetMapping("/all")
     public ResponseEntity<?> getAllItems(@CookieValue(value = "Test", required = false) String token) {
         try {
-            // Verifica se il token è presente e valido
-            if (token == null || !jwtUtils.validateToken(token)) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or missing JWT token");
-            }
-
-            // Estrai il ruolo dal token
-            Claims claims = jwtUtils.getClaimsFromToken(token);
-            String role = claims.get("role", String.class);
-
-            // Verifica che l'utente sia un amministratore
-            if (!"ADMIN".equals(role)) {
+            // Verifica se l'utente è ADMIN
+            if (!isAdmin(token)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Accesso negato: permessi insufficienti");
             }
 
@@ -55,17 +47,53 @@ public class OrderController {
     }
 
     @PostMapping("/")
-    public ResponseEntity<?> createOrder(@RequestBody OrderView orderView) {
-        if(orderView.getTotalAmount()<=0){
-            return ResponseEntity.badRequest().body("L'importo totale deve essere maggiore di zero.");  //Inserire anche un messaggio nella risposta
-        }
+    public ResponseEntity<?> createOrder(@CookieValue(value = "Test", required = false) String token, @RequestBody OrderView orderView) {
+        try {
+            // Verifica se l'utente è ADMIN
+            if (!isAdmin(token)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Accesso negato: permessi insufficienti");
+            }
 
-        return ResponseEntity.ok().body(orderService.createOrder(orderView));
+            if(orderView.getTotalAmount()<=0){
+                return ResponseEntity.badRequest().body("L'importo totale deve essere maggiore di zero.");  //Inserire anche un messaggio nella risposta
+            }
+
+            return ResponseEntity.ok().body(orderService.createOrder(orderView));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or missing JWT token");
+        }
     }
 
     @DeleteMapping("/{id}")
-    public void deleteOrder(@PathVariable Long id) {
-        orderService.deleteOrder(id);
+    public ResponseEntity<?> deleteOrder(@CookieValue(value = "Test", required = false) String token, @PathVariable Long id) {
+        try {
+            // Verifica se l'utente è ADMIN
+            if (!isAdmin(token)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Accesso negato: permessi insufficienti");
+            }
+
+            // Se l'utente è ADMIN, permette l'eliminazione dell'ordine
+            orderService.deleteOrder(id);
+            return ResponseEntity.ok("Ordine eliminato con successo");
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or missing JWT token");
+        }
+    }
+
+    private boolean isAdmin(String token) {
+        // Verifica se il token è valido
+        if (token == null || !jwtUtils.validateToken(token)) {
+            return false;
+        }
+
+        // Estrai il ruolo dal token
+        Claims claims = jwtUtils.getClaimsFromToken(token);
+        String role = claims.get("role", String.class);
+
+        // Verifica se il ruolo è ADMIN
+        return "ADMIN".equals(role);
     }
 }
 
