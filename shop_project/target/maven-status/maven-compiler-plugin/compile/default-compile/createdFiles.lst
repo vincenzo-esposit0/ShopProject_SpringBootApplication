@@ -1,0 +1,5 @@
+com\example\shop_projetc\service\AuthService.class
+com\example\shop_projetc\model\AuthView.class
+com\example\shop_projetc\controller\AuthController.class
+com\example\shop_projetc\config\SecurityConfig.class
+com\example\shop_projetc\exception\UsernameNotFoundException.class
