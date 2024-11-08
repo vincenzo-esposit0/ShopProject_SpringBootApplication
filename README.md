@@ -1,0 +1,3 @@
+# <p align="center"> ShopProject </p>
+
+Questo progetto mira allo sviluppo di un'applicazione web utilizzando Java e il framework Spring Boot, integrando JPA (Java Persistence API) e il database H2 per la gestione dei dati. La sicurezza dell'applicazione è garantita tramite l'uso di token JWT (JSON Web Token), che permettono di gestire l'autenticazione e l'autorizzazione degli utenti. L'applicazione include funzionalità di gestione delle entità e supporta diversi ruoli utente con accesso differenziato alle risorse. Il progetto punta a realizzare un'architettura scalabile e sicura, applicando le best practice del settore per la gestione dei dati e la protezione delle informazioni.
