@@ -1,6 +1,7 @@
 package com.example.shop_project.controller;
 
 import com.example.shop_project.entity.Item;
+import com.example.shop_project.entity.Order;
 import com.example.shop_project.model.OrderView;
 import com.example.shop_project.service.ItemService;
 import com.example.shop_project.service.OrderService;
@@ -42,8 +43,20 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public OrderView getOrderById(@PathVariable Long id) {
-        return orderService.getOrderById(id);
+    public ResponseEntity<?> getOrderById(@PathVariable Long id, @CookieValue(value = "Test", required = false) String token) {
+        try {
+            // Verifica se l'utente è ADMIN
+            if (!isAdmin(token)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Accesso negato: permessi insufficienti");
+            }
+
+            // Se l'utente è ADMIN, restituisci l'ordine per ID
+            OrderView order = orderService.getOrderById(id);
+            return ResponseEntity.ok(order);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+        }
     }
 
     @PostMapping("/")
@@ -58,7 +71,19 @@ public class OrderController {
                 return ResponseEntity.badRequest().body("L'importo totale deve essere maggiore di zero.");  //Inserire anche un messaggio nella risposta
             }
 
-            return ResponseEntity.ok().body(orderService.createOrder(orderView));
+            // Validazione di altri campi dell'ordine
+            if (orderView.getItemIdList() == null || orderView.getItemIdList().isEmpty()) {
+                return ResponseEntity.badRequest().body("La lista degli articoli non può essere vuota.");
+            }
+
+            // Verifica che i campi obbligatori siano presenti
+            if (orderView.getIdUser() == null) {
+                return ResponseEntity.badRequest().body("L'ID del cliente è obbligatorio.");
+            }
+
+            // Creazione dell'ordine
+            Order createdOrder = orderService.createOrder(orderView);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or missing JWT token");

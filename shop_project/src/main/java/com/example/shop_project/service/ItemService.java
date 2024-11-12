@@ -33,4 +33,8 @@ public class ItemService {
     public void deleteItem(Long id) {
         itemRepository.deleteById(id);
     }
+
+    public boolean itemExists(String name) {
+        return itemRepository.existsByName(name);
+    }
 }

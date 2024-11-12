@@ -67,6 +67,25 @@ public class ItemController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Accesso negato: permessi insufficienti");
             }
 
+            // Validazione dei campi obbligatori
+            if (itemView.getName() == null || itemView.getName().isEmpty()) {
+                return ResponseEntity.badRequest().body("Il nome dell'item è obbligatorio.");
+            }
+
+            if (itemView.getPrice() == null || itemView.getPrice() <= 0) {
+                return ResponseEntity.badRequest().body("Il prezzo dell'item deve essere maggiore di zero.");
+            }
+
+            // Controllo della lunghezza del nome
+            if (itemView.getName().length() > 100) {
+                return ResponseEntity.badRequest().body("Il nome dell'item non può superare i 100 caratteri.");
+            }
+
+            // Verifica di duplicazione (esempio)
+            if (itemService.itemExists(itemView.getName())) {
+                return ResponseEntity.badRequest().body("Un item con questo nome esiste già.");
+            }
+
             // Se l'utente è ADMIN, permette la creazione dell'item
             Item createdItem = itemService.createItem(itemView);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdItem);

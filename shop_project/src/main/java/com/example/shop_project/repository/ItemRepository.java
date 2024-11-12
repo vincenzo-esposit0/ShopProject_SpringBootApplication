@@ -10,5 +10,7 @@ import java.util.List;
 public interface ItemRepository extends JpaRepository<Item, Long> {
 
     public List<Item> findByIdIn(List<Long> itemId);
+
+    public boolean existsByName(String name);
 }
 

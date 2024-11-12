@@ -28,13 +28,37 @@ public class UserController {
     private JwtUtils jwtUtils;
 
     @GetMapping("/all")
-    public List<UserView> getAllUsers() {
-        return userService.getAllUsers();
+    public ResponseEntity<?> getAllUsers(@CookieValue(value = "Test", required = false) String token) {
+        try {
+            // Verifica se l'utente è ADMIN
+            if (!isAdmin(token)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Accesso negato: permessi insufficienti");
+            }
+
+            // Se l'utente è ADMIN, restituisci tutti gli utenti
+            List<UserView> users = userService.getAllUsers();
+            return ResponseEntity.ok(users);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+        }
     }
 
     @PostMapping("/")
-    public User createUser(@RequestBody UserView userView) {
-        return userService.createUser(userView);
+    public ResponseEntity<?> createUser(@RequestBody UserView userView, @CookieValue(value = "Test", required = false) String token) {
+        try {
+            // Verifica se l'utente è ADMIN
+            if (!isAdmin(token)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Accesso negato: permessi insufficienti");
+            }
+
+            // Se l'utente è ADMIN, crea un nuovo utente
+            User user = userService.createUser(userView);
+            return ResponseEntity.status(HttpStatus.CREATED).body(user);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+        }
     }
 
     @DeleteMapping("/{id}")
@@ -43,8 +67,20 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public UserView findUserById(@PathVariable Long id) {
-        return userService.findUserById(id);
+    public ResponseEntity<?> findUserById(@PathVariable Long id, @CookieValue(value = "Test", required = false) String token) {
+        try {
+            // Verifica se l'utente è ADMIN
+            if (!isAdmin(token)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Accesso negato: permessi insufficienti");
+            }
+
+            // Se l'utente è ADMIN, restituisci l'utente per ID
+            UserView user = userService.findUserById(id);
+            return ResponseEntity.ok(user);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+        }
     }
 
     @GetMapping("/orders")
@@ -68,6 +104,19 @@ public class UserController {
         }
     }
 
+    private boolean isAdmin(String token) {
+        // Verifica se il token è valido
+        if (token == null || !jwtUtils.validateToken(token)) {
+            return false;
+        }
+
+        // Estrai il ruolo dal token
+        Claims claims = jwtUtils.getClaimsFromToken(token);
+        String role = claims.get("role", String.class);
+
+        // Verifica se il ruolo è ADMIN
+        return "ADMIN".equals(role);
+    }
 
 }
 
